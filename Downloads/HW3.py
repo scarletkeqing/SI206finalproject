@@ -31,7 +31,8 @@ class Magic8Ball():
     # For example: 
     # for answer list ['Yes', 'No', 'Maybe'], it should return a string, "['Yes', 'No', 'Maybe']"
 
-    # YOUR ANSWER HERE
+    def __str__(self):
+        return self.answer_list
 
 
     # Create the get_random_answer method
@@ -143,7 +144,7 @@ def test():
     print("* Testing the __str__ method")
     print(bot)
     print()
-
+    
     print("* Printing the history when no answers have been generated yet")
     bot.print_question_history()
     print()
