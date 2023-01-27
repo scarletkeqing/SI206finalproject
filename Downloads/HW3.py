@@ -58,7 +58,11 @@ class Magic8Ball():
     # Otherwise, it adds the question to the question_history_list and
     #               returns the answer from get_random_answer.
 
-    # YOUR ANSWER HERE
+    def shake(self, question):
+        if question in self.question_history_list:
+            return "I've already answered that question"
+        self.question_history_list.append(question)
+        return self.get_random_answer()
 
 
     # Create the print_question_history method
