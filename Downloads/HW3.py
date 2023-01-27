@@ -32,7 +32,7 @@ class Magic8Ball():
     # for answer list ['Yes', 'No', 'Maybe'], it should return a string, "['Yes', 'No', 'Maybe']"
 
     def __str__(self):
-        return self.answer_list
+        return str(self.answer_list)
 
 
     # Create the get_random_answer method
@@ -61,8 +61,9 @@ class Magic8Ball():
     def shake(self, question):
         if question in self.question_history_list:
             return "I've already answered that question"
-        self.question_history_list.append(question)
-        return self.get_random_answer()
+        else:
+            self.question_history_list.append(question)
+            return self.get_random_answer()
 
 
     # Create the print_question_history method
@@ -75,11 +76,12 @@ class Magic8Ball():
     #  each on a separate line.
 
     def print_question_history(self):
-        if self.answer_history_list:
+        if self.answer_history_list == False:
             print("None yet")
         else:
-            for answer in self.answer_history_list:
-                print(str(self.answer_history_list[answer]), self.question_history_list[answer] + " - " + self.answer_list[answer])
+            for i in range(len(self.answer_history_list)):
+                answer = self.answer_history_list[i]
+                print("[" + str(answer) + "] " + self.question_history_list[i] + " - " + self.answer_list[answer])
 
 
     # EXTRA POINTS
@@ -134,7 +136,7 @@ def main():
     while choice != "quit":
 
         # shake the ball and get an answer
-        magic8ball.shake()
+        magic8ball.shake(choice)
         magic8ball.get_random_answer()
 
         # print question - answer
@@ -196,5 +198,5 @@ def test():
 
 # Only run the main function if this file is being run (not imported)
 if __name__ == "__main__":
-    main()
-    # test() #TODO: Uncomment when you are ready to test your Magic8Ball class
+   # main()
+    test() #TODO: Uncomment when you are ready to test your Magic8Ball class
