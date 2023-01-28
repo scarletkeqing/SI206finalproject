@@ -1,7 +1,7 @@
-﻿# Your name: 
-# Your student id:
-# Your email:
-# List who you have worked with on this homework:
+﻿# Your name: Kim Nguyen
+# Your student id: 98652556
+# Your email: hkimngu@umich.edu
+# List who you have worked with on this homework: n/a
 
 
 # import the random module for use in this program
@@ -18,7 +18,10 @@ class Magic8Ball():
     # (2) sets this object's question_history_list (instance variable) to an empty list,
     # (3) and sets this object's answer_history_list (instance variable) to an empty list.
 
-    # YOUR ANSWER HERE
+    def __init__(self, answer_list):
+        self.answer_list = answer_list
+        self.question_history_list = []
+        self.answer_history_list = []
 
 
     # Create the __str__ method
@@ -28,7 +31,8 @@ class Magic8Ball():
     # For example: 
     # for answer list ['Yes', 'No', 'Maybe'], it should return a string, "['Yes', 'No', 'Maybe']"
 
-    # YOUR ANSWER HERE
+    def __str__(self):
+        return str(self.answer_list)
 
 
     # Create the get_random_answer method
