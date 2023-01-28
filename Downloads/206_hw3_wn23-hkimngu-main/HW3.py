@@ -143,14 +143,20 @@ def main():
     magic8ball = Magic8Ball(answer_list)
 
     # Get the first question or quit
+    choice = input("Ask a question or quit: ")
 
     # Loop while question is not "quit"
+    while choice != "quit":
 
         # shake the ball and get an answer
+        magic8ball.shake(choice)
+        magic8ball.get_random_answer()
 
         # print question - answer
+        magic8ball.print_question_history()
 
         # get the next question or quit 
+        choice = input("Ask a question or quit: ")
 
 
 def test():
