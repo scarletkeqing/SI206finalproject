@@ -43,7 +43,10 @@ class Magic8Ball():
     # It first randomly chooses an index and appends that index to the answer_history_list.
     # Then it returns the answer at the randomly picked index.
 
-    # YOUR ANSWER HERE
+    def get_random_answer(self):
+        random_number = random.choice(range(0, len(self.answer_list)))
+        self.answer_history_list.append(random_number)
+        return self.answer_list[random_number]
 
 
     # Create the shake method 
