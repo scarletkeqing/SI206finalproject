@@ -101,18 +101,31 @@ class Magic8Ball():
     #           nagative = ["Very doubtful", "Don't count on it", "No"]
 
     def answer_frequency(self, n):
-        # YOUR ANSWER BELOW
+        n_answers = []
+        counted_answers = []
+        for i in range(n):
+            n_answers.append(self.get_random_answer())
 
-        # affirmative = ["Definitely", "Most likely", "It is certain"]
-        # nagative = ["Very doubtful", "Don't count on it", "No"]
-
-        print()
-        # if [SOME_CONDITION]:
-        #     print("The most common answer was affirmative.")
-        # elif [SOME_CONDITION]:
-        #     print("The most common answer was negative.")
-        # else:
-        #     print("The most common answer was neither affirmative nor negative.")
+        common_answer = ""
+        common_answer_counter = 0
+        for answer in n_answers:
+            if answer in counted_answers:
+                pass
+            else:
+                print(answer + ": " + str(n_answers.count(answer)))
+                counted_answers.append(answer)
+                if n_answers.count(answer) > common_answer_counter:
+                    common_answer = answer
+                    common_answer_counter = n_answers.count(answer)
+        
+        affirmative = ["Definitely", "Most likely", "It is certain"]
+        negative = ["Very doubtful", "Don't count on it", "No"]
+        if common_answer in affirmative:
+             print("The most common answer was affirmative.")
+        elif common_answer in negative:
+             print("The most common answer was negative.")
+        else:
+            print("The most common answer was neither affirmative nor negative.")
 
 
 
