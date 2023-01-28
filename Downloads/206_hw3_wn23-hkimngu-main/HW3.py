@@ -75,7 +75,13 @@ class Magic8Ball():
     # the method prints "[answer index] question - answer" for each of the indices in the answer_history_list,
     #  each on a separate line.
 
-    # YOUR ANSWER HERE
+    def print_question_history(self):
+        if self.answer_history_list == False:
+            print("None yet")
+        else:
+            for i in range(len(self.answer_history_list)):
+                answer = self.answer_history_list[i]
+                print("[" + str(answer) + "] " + self.question_history_list[i] + " - " + self.answer_list[answer])
 
 
     # EXTRA POINTS
