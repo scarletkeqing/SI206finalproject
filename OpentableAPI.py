@@ -1,84 +1,76 @@
-# Gather data from Open Food Facts API
-import json
-import requests
-import sqlite3 
-import pandas as pd 
+import os 
+import sqlite3
+from bs4 import BeautifulSoup
+import shutil
 
-import os
+def create_table(cursor):
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Bookings 
+                      (restaurant_name TEXT, number_of_bookings INTEGER)''')
 
-DBNAME = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'OpenFoodFacts.db')
+def insert_data(cursor, restaurant_name, number_of_bookings):
+    cursor.execute('''INSERT INTO Bookings (restaurant_name, number_of_bookings) 
+                      VALUES (?, ?)''', (restaurant_name, number_of_bookings))
 
-DBNAME = 'OpenFoodFacts.db'
-    
-def create_food_db():
-    conn = sqlite3.connect(DBNAME)
-    cur = conn.cursor()
+def get_daily_bookings(html_file, database_name): 
+    base_path = os.path.abspath(os.path.dirname(__file__))
+    full_path = os.path.join(base_path, html_file)
+    db_path = os.path.join(base_path, database_name)
 
-    # Creating food details' table
-    create_foods_tbl = '''
-        CREATE TABLE IF NOT EXISTS 'Foods' (
-            'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
-            'Name' TEXT,
-            'Brand' TEXT,
-            'EcoScore' INTEGER
-        );
-    '''
-    cur.execute(create_foods_tbl)
 
-    conn.commit()
-    conn.close()
+    try:
+        with open(full_path, "r", encoding='utf-8') as file:
+            html_content = file.read()
 
-def add_food_data():
-    conn = sqlite3.connect(DBNAME)
-    cur = conn.cursor()
+            soup = BeautifulSoup(html_content, "html.parser")
 
-    base_url = "https://world.openfoodfacts.org/api/v0/product/"
-    
-    # Sample product barcodes
-    product_barcodes = ['3017620422003', '3502110009449', '87157215', '8000500037560']
+            booking_descriptions = soup.find_all("span", class_="phReGjtGv9RByOnBEYKd izPsIMkDXFT6DHsiAQCY")
+            restaurant_names = soup.find_all("h6", class_="tfljo0SQq0JS3FOxpvxL")
 
-    for barcode in product_barcodes:
-        params = {'barcode': barcode}
-        response = requests.get(base_url + barcode + '.json', params=params)
-        result = response.json()
+            booking_number_list = []
+            names_list = []
+
+            for booking_description in booking_descriptions:
+                text = booking_description.get_text()
+                for char in text:
+                    if char.isdigit():
+                        booking_number_list.append(int(char))
+
+            for restaurant_name in restaurant_names:
+                text = restaurant_name.get_text()
+                names_list.append(text)
+
+            # Connect to the database
+            # conn = sqlite3.connect(database_name)
+            conn = sqlite3.connect(db_path)
+
+            cursor = conn.cursor()
+
+            # Create the table if it doesn't exist
+            create_table(cursor)
+
+            # Insert data into the table
+            for name, booking_count in zip(names_list, booking_number_list):
+                insert_data(cursor, name, booking_count)
+
+
+            # Commit changes and close connection
+            conn.commit()
+            conn.close()
+
+            return "Data inserted into database."
+
+            shutil.move(db_path, os.path.join(base_path, database_name))
+
+    except Exception as e:
+        print("Error occurred:", e)
+
+# Call the function with your HTML file and specify the database name
+get_daily_bookings("Restaurant Reservation Availability _ OpenTable.html", "restaurant_bookings.db")
+
+
+
+
         
-        if 'product' in result:
-            product = result['product']
-            name = product['product_name'] if 'product_name' in product else "No Data"
-            brand = product['brands'] if 'brands' in product else "No Data"
-            eco_score = product['ecoscore_grade'] if 'ecoscore_grade' in product else "No Data"
-
-            insertion = (None,name,brand,eco_score)
-
-            statement = 'INSERT INTO "Foods"'
-            statement += 'VALUES (?,?,?,?)'
-            cur.execute(statement, insertion)
-
-    conn.commit()
-    conn.close()
-
-def get_food_data():
-    conn = sqlite3.connect(DBNAME)
-    cur = conn.cursor()
-
-    statement = "SELECT Name, Brand, EcoScore FROM Foods"
-    cur.execute(statement)
-
-    data = cur.fetchall()
-    
-    return data
-
-# Creating DB & Tables
-def main():
-    create_food_db()
-
-# Populating tables with data from openfoodfacts API
-    add_food_data() 
-
-# Retrieveing and printing data from the table
-    get_food_data()
-
-main()
 
 
 
