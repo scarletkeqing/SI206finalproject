@@ -2,7 +2,9 @@
 # Gather data from Yelp API
 import requests
 import sqlite3
-import json
+import json 
+#import matplotlib 
+#import matplotlib.pyplot as plt 
 
 yelp_searches = 'https://api.yelp.com/v3/businesses/search?location=Ann%20Arbor'
 yelp_reviews = 'https://api.yelp.com/v3/businesses/{id}/reviews'
@@ -29,7 +31,7 @@ def gather_yelp_data(keyword):
     parameter = {
         'term': keyword,
         'categories': 'restaurants',
-        'limit': 50,
+        'limit': 100,
         'api_key': yelp_api,
     }
 
@@ -60,6 +62,8 @@ def save_data_to_db(source, restaurant_data, reviews_data):
             conn.commit()
 
     conn.close()
+
+# def visualization_
 
 def main():
     create_yelp_db()

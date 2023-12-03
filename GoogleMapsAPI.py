@@ -2,8 +2,8 @@ import json
 import requests
 import sqlite3
 
-google_maps_api_key = "AIzaSyCscZnjFAw0hMEEVNngPDU_iaufa_NX9_g"
-url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query=food+in+ann+arbor&key={google_maps_api_key}"
+google_maps_api_key = "AIzaSyB_Qkf_TqHrHoFlzzBGgdW5DGaKxdFJnPA"
+url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query=food%20ann%20&key={google_maps_api_key}"
 
 def create_google_maps_db():
     conn = sqlite3.connect("GoogleMaps.db")
@@ -29,9 +29,10 @@ def input_google_maps_data_in_db(name, rating, total_ratings):
     conn.commit()
     conn.close()
 
-def get_foursquare_data(url):
+def get_googlemap_data(url):
     response = requests.get(url)
     data = response.json()
+    print(data)
     for restaurant in data["results"]:
         name = restaurant.get("name")
         rating = restaurant.get("rating")
@@ -40,8 +41,6 @@ def get_foursquare_data(url):
 
 def main():
     create_google_maps_db()
-    get_foursquare_data(url)
+    get_googlemap_data(url)
 
 main()
-
-
