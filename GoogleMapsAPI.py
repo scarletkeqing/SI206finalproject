@@ -31,13 +31,12 @@ def input_google_maps_data_in_db(name, rating, total_ratings):
 
 def get_googlemap_data(url, api_key):
     ann_arbor_locations = {
-        "downtown": {"lat": "42.2807", "long": "-83.7463"},
         "central_campus":{"lat": "42.2766", "long": "-83.7426"},
-        "north_campus": {"lat": "39.2184", "long": "-84.5508"},
+        "downtown": {"lat": "42.2807", "long": "-83.7463"},
         "kerrytown": {"lat": "42.2862", "long": "-83.7451"},
-        "burns_park": {"lat": "42.2657", "long": "-83.7350"},
+        "north_campus": {"lat": "39.2184", "long": "-84.5508"},
+        "northside": {"lat": "42.2981", "long": "-83.7321"},
         "old_west_side": {"lat": "42.27518", "long": "-83.75667"},
-        "northside": {"lat": "42.2981", "long": "83.7321"}
     }
     restaurant_dict = {}
 
@@ -46,8 +45,8 @@ def get_googlemap_data(url, api_key):
         long = ann_arbor_locations.get(area)["long"]
         parameters = {
             'location': f"{lat},{long}",
-            'radius' : '500',
             'type': 'restaurant',
+            'rankby': 'distance',
             'key': api_key
         }
         response = requests.get(url, params=parameters)
@@ -58,10 +57,18 @@ def get_googlemap_data(url, api_key):
                 rating = restaurant.get("rating")
                 total_ratings = restaurant.get("user_ratings_total")
                 restaurant_dict[name] = {"rating": rating, "total_ratings": total_ratings}
-    print(len(restaurant_dict))
+    return restaurant_dict
+
+def put_restaurant_dict_into_db(restaurant_dict):
+    for restaurant in restaurant_dict:
+        name = restaurant
+        rating = restaurant_dict[restaurant].get("rating")
+        total_rating = restaurant_dict[restaurant].get("total_ratings")
+        input_google_maps_data_in_db(name, rating, total_rating)
 
 def main():
     create_google_maps_db()
-    get_googlemap_data(url, google_maps_api_key)
+    data = get_googlemap_data(url, google_maps_api_key)
+    put_restaurant_dict_into_db(data)
 
 main()
