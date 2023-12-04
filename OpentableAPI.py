@@ -47,10 +47,17 @@ def get_daily_bookings(html_files: list, database_name: str):
                     text = restaurant_name.get_text()
                     names_list.append(text)
 
-
-                # Insert data into the table
                 for name, booking_count in zip(names_list, booking_number_list):
-                    insert_data(cursor, name, booking_count)
+                    cursor.execute("SELECT * FROM Bookings WHERE restaurant_name=?", (name,))
+                    existing_restaurant = cursor.fetchone()
+
+                    if existing_restaurant:
+                        # If the restaurant exists, update the booking count
+                        new_booking_count = existing_restaurant[1] + booking_count
+                        cursor.execute("UPDATE Bookings SET number_of_bookings=? WHERE restaurant_name=?", (new_booking_count, name))
+                    else:
+                        # If the restaurant doesn't exist, insert new data
+                        insert_data(cursor, name, booking_count)
 
 
         # Commit changes and close connection
@@ -63,12 +70,7 @@ def get_daily_bookings(html_files: list, database_name: str):
         print("Error occurred:", e)
 
 # Call the function with a list of your HTML files and specify the database name
-get_daily_bookings(["first_page.html", "second_page.html"], "restaurant_bookings.db")
-
-
-        
-
-
+get_daily_bookings(["first_page.html", "second_page.html", "third_page.html"], "restaurant_bookings.db")
 
 
 

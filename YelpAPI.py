@@ -3,8 +3,6 @@
 import requests
 import sqlite3
 import json 
-#import matplotlib 
-#import matplotlib.pyplot as plt 
 
 yelp_searches = 'https://api.yelp.com/v3/businesses/search?location=Ann%20Arbor'
 yelp_reviews = 'https://api.yelp.com/v3/businesses/{id}/reviews'
@@ -27,23 +25,32 @@ def create_yelp_db():
     conn.commit()
     conn.close()
 
-def gather_yelp_data(keyword):
-    parameter = {
-        'term': keyword,
-        'categories': 'restaurants',
-        'limit': 100,
-        'api_key': yelp_api,
-    }
+def gather_yelp_data(keyword): 
+    rows = 100 
+    yelp_fetch_limit = 25 
 
-    response = requests.get(yelp_searches, headers={'Authorization': f'Bearer {yelp_api}'}, params=parameter)
-    data = response.json()
+    for offset in range(0, rows, yelp_fetch_limit): 
+        parameter = {
+            'term': keyword,
+            'categories': 'restaurants',
+            'limit': yelp_fetch_limit, 
+            'offset': offset, 
+            'api_key': yelp_api,
+        }
 
-    for restaurant in data.get('businesses', []):
-        restaurant_id = restaurant.get('id')
-        reviews_response = requests.get(yelp_reviews.format(id=restaurant_id), headers={'Authorization': f'Bearer {yelp_api}'})
-        reviews_data = reviews_response.json()
+        response = requests.get(yelp_searches, headers={'Authorization': f'Bearer {yelp_api}'}, params=parameter)
+        data = response.json() 
 
-        save_data_to_db('yelp_data', restaurant, reviews_data.get('reviews', []))
+        print(data)
+
+        print(f"Offset: {offset}, Businesses received: {len(data.get('businesses', []))}") 
+
+        for restaurant in data.get('businesses', []):
+            restaurant_id = restaurant.get('id')
+            reviews_response = requests.get(yelp_reviews.format(id=restaurant_id), headers={'Authorization': f'Bearer {yelp_api}'})
+            reviews_data = reviews_response.json()
+
+            save_data_to_db('yelp_data', restaurant, reviews_data.get('reviews', []))
 
 def save_data_to_db(source, restaurant_data, reviews_data):
     conn = sqlite3.connect(YELP_DB)
@@ -62,8 +69,6 @@ def save_data_to_db(source, restaurant_data, reviews_data):
             conn.commit()
 
     conn.close()
-
-# def visualization_
 
 def main():
     create_yelp_db()
