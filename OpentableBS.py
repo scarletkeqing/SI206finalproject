@@ -4,12 +4,12 @@ from bs4 import BeautifulSoup
 import glob
 
 def create_table(cursor, conn):
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Bookings 
+    cursor.execute('''CREATE TABLE IF NOT EXISTS OpenTable 
                       (id INTEGER PRIMARY KEY, restaurant_name TEXT, number_of_bookings INTEGER, address TEXT)''')
     conn.commit()
 
 def insert_into_table(cursor, conn, name, num_of_bookings, address):
-    cursor.execute("INSERT INTO Bookings (id, restaurant_name, number_of_bookings, address) VALUES (?, ?, ?)", (id, name, num_of_bookings, address))
+    cursor.execute("INSERT INTO OpenTable (restaurant_name, number_of_bookings, address) VALUES (?, ?, ?)", (name, num_of_bookings, address))
     conn.commit()
 
 def get_daily_bookings(db_name):
@@ -65,4 +65,4 @@ def get_daily_bookings(db_name):
                     conn.close()
                     return 
 
-get_daily_bookings("SI206finalproject/restaurant_bookings.db")
+get_daily_bookings("SI206finalproject/OpenTable.db")
