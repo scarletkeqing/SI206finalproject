@@ -3,46 +3,46 @@ import requests
 import sqlite3
 
 google_maps_api_key = "AIzaSyCsKZblWthpw-MxkuF4drKL9TZQRwfGIXE"
-url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
+restaurant_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
+location_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
 
-def create_google_maps_db():
+#create a table
+def create_google_maps_table():
     conn = sqlite3.connect("GoogleMaps.db")
     cur = conn.cursor()
     cur.execute(
         '''CREATE TABLE IF NOT EXISTS GoogleMapsData
         (name TEXT PRIMARY KEY,
         rating FLOAT,
-        total_ratings INT)'''
+        total_ratings INT,
+        price_range INT)'''
     )
     conn.commit()
     conn.close()
 
-def input_google_maps_data_in_db(name, rating, total_ratings):
-    conn = sqlite3.connect("GoogleMaps.db")
-    cur = conn.cursor()
+# grab ann arbor neighborhoods and their latitudes and longitudes
+def get_ann_arbor_locations(url, api_key):
+    location_dict = {}
+    parameters = {
+            'radius': "1000",
+            'query': "neighborhoods in ann arbor",
+            'key': api_key
+        }
+    response = requests.get(url, params=parameters)
+    data = response.json()
+    for location in data['results']:
+        neighborhood = location.get('name')
+        coord = (location.get('geometry').get('location'))
+        location_dict[neighborhood] = coord
+    return location_dict
 
-    cur.execute(
-            '''INSERT OR IGNORE INTO GoogleMapsData (name, rating, total_ratings)
-            VALUES (?, ?, ?)''',
-            (name, rating, total_ratings)
-        )
-    conn.commit()
-    conn.close()
-
-def get_googlemap_data(url, api_key):
-    ann_arbor_locations = {
-        "central_campus":{"lat": "42.2766", "long": "-83.7426"},
-        "downtown": {"lat": "42.2807", "long": "-83.7463"},
-        "kerrytown": {"lat": "42.2862", "long": "-83.7451"},
-        "north_campus": {"lat": "39.2184", "long": "-84.5508"},
-        "northside": {"lat": "42.2981", "long": "-83.7321"},
-        "old_west_side": {"lat": "42.27518", "long": "-83.75667"},
-    }
+# using the neighborhood data with their latitudes and longitudes, 
+# find the nearest restaurants in those areas
+def get_googlemap_data(url, api_key, location_dict):
     restaurant_dict = {}
-
-    for area in ann_arbor_locations:
-        lat = ann_arbor_locations.get(area)["lat"]
-        long = ann_arbor_locations.get(area)["long"]
+    for neighborhood in location_dict:
+        lat = location_dict[neighborhood]["lat"]
+        long = location_dict[neighborhood]["lng"]
         parameters = {
             'location': f"{lat},{long}",
             'type': 'restaurant',
@@ -56,19 +56,31 @@ def get_googlemap_data(url, api_key):
             if name not in restaurant_dict:
                 rating = restaurant.get("rating")
                 total_ratings = restaurant.get("user_ratings_total")
-                restaurant_dict[name] = {"rating": rating, "total_ratings": total_ratings}
+                price_level = restaurant.get("price_level")
+                restaurant_dict[name] = {"rating": rating, "total_ratings": total_ratings, "price_level": price_level}
     return restaurant_dict
 
-def put_restaurant_dict_into_db(restaurant_dict):
+# put restaurant data into table
+def put_restaurant_dict_into_table(restaurant_dict):
+    conn = sqlite3.connect("GoogleMaps.db")
+    cur = conn.cursor()
     for restaurant in restaurant_dict:
         name = restaurant
         rating = restaurant_dict[restaurant].get("rating")
-        total_rating = restaurant_dict[restaurant].get("total_ratings")
-        input_google_maps_data_in_db(name, rating, total_rating)
+        total_ratings = restaurant_dict[restaurant].get("total_ratings")
+        price_level = restaurant_dict[restaurant].get("price_level")
+        cur.execute(
+            '''INSERT OR IGNORE INTO GoogleMapsData (name, rating, total_ratings, price_range)
+            VALUES (?, ?, ?, ?)''',
+            (name, rating, total_ratings, price_level)
+        )
+    conn.commit()
+    conn.close()
 
 def main():
-    create_google_maps_db()
-    data = get_googlemap_data(url, google_maps_api_key)
-    put_restaurant_dict_into_db(data)
+    create_google_maps_table()
+    locations = get_ann_arbor_locations(location_url, google_maps_api_key)
+    data = get_googlemap_data(restaurant_url, google_maps_api_key, locations)
+    put_restaurant_dict_into_table(data)
 
 main()

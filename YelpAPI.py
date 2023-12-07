@@ -28,6 +28,7 @@ def create_yelp_db():
 def gather_yelp_data(keyword): 
     rows = 100 
     yelp_fetch_limit = 25 
+    unique_name = set() 
 
     for offset in range(0, rows, yelp_fetch_limit): 
         parameter = {
@@ -43,14 +44,18 @@ def gather_yelp_data(keyword):
 
         print(data)
 
-        print(f"Offset: {offset}, Businesses received: {len(data.get('businesses', []))}") 
+        print(f"Offset: {offset}, Businesses received: {len(data.get('businesses'))}") 
 
-        for restaurant in data.get('businesses', []):
-            restaurant_id = restaurant.get('id')
-            reviews_response = requests.get(yelp_reviews.format(id=restaurant_id), headers={'Authorization': f'Bearer {yelp_api}'})
-            reviews_data = reviews_response.json()
+        for restaurant in data.get('businesses'): 
+            name = restaurant.get('name') 
+            if name not in unique_name: 
+                restaurant_id = restaurant.get('id')
+                reviews_response = requests.get(yelp_reviews.format(id=restaurant_id), headers={'Authorization': f'Bearer {yelp_api}'})
+                reviews_data = reviews_response.json()
 
-            save_data_to_db('yelp_data', restaurant, reviews_data.get('reviews', []))
+                unique_name.add(name)
+                save_data_to_db('yelp_data', restaurant, reviews_data.get('reviews'))
+
 
 def save_data_to_db(source, restaurant_data, reviews_data):
     conn = sqlite3.connect(YELP_DB)
@@ -60,13 +65,15 @@ def save_data_to_db(source, restaurant_data, reviews_data):
         name = restaurant_data.get('name')
         rating = restaurant_data.get('rating')
         reviews = []
-        for review in reviews_data:
-            review_text = review.get('text')
-            if review_text:
-                reviews.append(review_text)
-        if name and rating:
-            cur.execute('INSERT INTO YelpData (name, rating, reviews) VALUES (?, ?, ?)', (name, rating, json.dumps(reviews)))
-            conn.commit()
+        if reviews_data:
+            for review in reviews_data:
+                review_text = review.get('text')
+                if review_text:
+                    reviews.append(review_text)
+            if name and rating:
+                cur.execute('INSERT INTO YelpData (name, rating, reviews) VALUES (?, ?, ?)', (name, rating, json.dumps(reviews)))
+                conn.commit()
+# insert some logic such that if the data ends at 81, find a way to insert from 82 
 
     conn.close()
 
