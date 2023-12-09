@@ -156,6 +156,9 @@ def create_db():
     #gather_yelp_data('restaurants')
 
 
+    
+
+
     # create Yelp Address ID table
     cursor.execute( 
         """
