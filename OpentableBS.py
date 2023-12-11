@@ -2,14 +2,15 @@ import os
 import sqlite3
 from bs4 import BeautifulSoup
 import glob
+import re
 
 def create_table(cursor, conn):
     cursor.execute('''CREATE TABLE IF NOT EXISTS OpenTable 
-                      (id INTEGER PRIMARY KEY, restaurant_name TEXT, number_of_bookings INTEGER, address TEXT)''')
+                      (id INTEGER PRIMARY KEY, restaurant_name TEXT, number_of_bookings INTEGER, address TEXT, phone_number TEXT)''')
     conn.commit()
 
-def insert_into_table(cursor, conn, name, num_of_bookings, address):
-    cursor.execute("INSERT INTO OpenTable (restaurant_name, number_of_bookings, address) VALUES (?, ?, ?)", (name, num_of_bookings, address))
+def insert_into_table(cursor, conn, name, num_of_bookings, address, phone_number):
+    cursor.execute("INSERT INTO OpenTable (restaurant_name, number_of_bookings, address, phone_number) VALUES (?, ?, ?, ?)", (name, num_of_bookings, address, phone_number))
     conn.commit()
 
 def get_daily_bookings(db_name):
@@ -36,10 +37,12 @@ def get_daily_bookings(db_name):
             booking_descriptions_soup = soup.find_all("span", class_="Rv4uk4xWG5CqQmf74o1v cpEOy_DPrbjR6hnlY0ub")
             restaurant_names_soup = soup.find_all("h1", class_="eM9Li2wbkQvvjxZB11sV mPudeIT67bJGOcOfKy92")
             addresses_soup = soup.find_all("p", class_="aAmRZnL9EescJ80holSh")
+            phone_numbers_soup = soup.find_all("a", class_="eC8GwYb0MZh6B5cGwcE3 TINDZVVXk9jAAtF9ckbR cpEOy_DPrbjR6hnlY0ub eAmYq9fA8T5DYh2x4An7")
 
             restaurant_names_list = []
             booking_number_list = []
             addresses_list = []
+            phone_numbers_list = []
 
             for name_soup in restaurant_names_soup:
                 text = name_soup.get_text()
@@ -57,12 +60,22 @@ def get_daily_bookings(db_name):
                 if text not in addresses_list:  
                     addresses_list.append(text)
 
-            for i in range(min(len(restaurant_names_list), len(booking_number_list), len(addresses_list))):
-                insert_into_table(cursor, conn, restaurant_names_list[i], booking_number_list[i], addresses_list[i])
+            phone_number_pattern = re.compile(r"\(\d{3}\) \d{3}-\d{4}")
+
+            for phone_number_soup in phone_numbers_soup:
+                text = phone_number_soup.get_text()
+                match = phone_number_pattern.search(text)
+                if match:
+                    phone_number = match.group()
+                    if phone_number not in phone_numbers_list:
+                        phone_numbers_list.append(phone_number)
+
+            for i in range(min(len(restaurant_names_list), len(booking_number_list), len(addresses_list), len(phone_numbers_list))):
+                insert_into_table(cursor, conn, restaurant_names_list[i], booking_number_list[i], addresses_list[i], phone_numbers_list[i])
                 current_items += 1
 
                 if current_items >= max_items:
                     conn.close()
-                    return 
+                    return
 
 get_daily_bookings("SI206finalproject/OpenTable.db")

@@ -1,201 +1,288 @@
 # Names: Tiffany Tam, Kim Nguyen, Ke Qing Wong
 # Uniqnames: itsteep@umich.edu, hkimngu@umich.edu, qscarlet@umich.edu
 
-
-
-# # join tables 
-# def save_data_to_BaoBuddies(cur, conn): 
-#     cur.execute(
-#         """
-#         INSERT INTO FinalData (name, google_rating, total_ratings_google, opentable_num_bookings, yelp_rating, reviews)
-#         SELECT 
-#             GoogleMapsData.name, 
-#             GoogleMapsData.rating, 
-#             GoogleMapsData.total_ratings, 
-#             Bookings.number_of_bookings, 
-#             YelpData.rating, 
-#             YelpData.reviews 
-
-#         FROM GoogleMapsData 
-#         JOIN Bookings ON GoogleMapsData .name = Bookings.restaurant_name 
-#         JOIN YelpData ON GoogleMapsData .name = YelpData.name;
-#         """
-#     )
-
-#     conn.commit() 
-
-# # graphs/charts using plotly 
-
-# # visualization 1: 
-# # How many times a table has been booked vs ratings for the average of both (google and Yelp) 
-# # Scatterplot 
-# # Is there ​​any correlation between the booking frequency and the average ratings?
-
-# def visualization_bookings_vs_ratings(cur, conn): 
-#     cur.execute(
-#         """
-#         SELECT AVG((YelpData.rating + GoogleMapsData.rating) / 2) AS average_rating, Bookings.number_of_bookings
-#         FROM GoogleMapsData 
-#         JOIN Bookings ON GoogleMapsData.name = Bookings.restaurant_name
-#         JOIN YelpData ON GoogleMapsData.name = YelpData.name 
-#         GROUP BY GoogleMapsData.name 
-#         """
-#     )
-
-#     res = cur.fetchall() 
-#     avg_rating, bookings = zip(*res) 
-
-#     fig = go.Figure(data=[go.Scatter(name="Average Rating vs Bookings", x=avg_rating, y=bookings, mode='markers', marker_color='rgb(55,83,109)')])
-
-#     title_str = "Does rating affect number of bookings?" 
-
-#     fig.show() 
-#     conn.close() 
-
-# # visualization 2: 
-# # Word count vs. Yelp ratings
-
-
-
-# # visualization 3: 
-# # Average Ratings vs. Price range (num dollar signs)
-# def visualization_rating_vs_price_range(db_name):
-#     conn = sqlite3.connect(db_name)
-#     cur = conn.cursor()
-
-#     cur.execute(
-#         """
-#         SELECT GoogleMapsData.name, GoogleMapsData.rating, GoogleMapsData.price_range
-#         FROM GoogleMapsData 
-        
-#         """
-#     )
-#     data = cur.fetchall()
-#     rating_data = [row[1] for row in data]
-#     price_range_data = [row[2] for row in data]
-
-#     #plt.plot(price_range_data, rating_data)
-#     #plt.xlabel("Price Range")
-#     #plt.ylabel("Rating")
-#     #plt.show()
-
-# import requests
-# import sqlite3
-# import pandas as pd
-# import plotly.graph_objects as go 
-
-# # create final database
-# def create_tables(final_db_name): 
-#     conn = sqlite3.connect(final_db_name)
-#     cur = conn.cursor() 
-
-#     cur.execute( 
-#         """
-#         CREATE TABLE IF NOT EXISTS Yelp (
-#             id INTEGER PRIMARY KEY,
-#             name TEXT PRIMARY KEY, 
-#             rating FLOAT 
-#             address_id INTEGER PRIMARY KEY,  
-#             reviews TEXT 
-#             full_address TEXT PRIMARY KEY
-#         )"""
-#     )
-
-#     cur.execute( 
-#         """
-#         CREATE TABLE IF NOT EXISTS Yelp Address ID (
-#             address_id INTEGER PRIMARY KEY,
-#             street_name TEXT PRIMARY KEY, 
-#         )"""
-#     )
-    
-
-#     cur.execute( 
-#         """
-#         CREATE TABLE IF NOT EXISTS Google Maps (
-#             full_address TEXT PRIMARY KEY,
-#             total_ratings FLOAT, 
-#             average_rating FLOAT,
-#             total_dollar_signs INTEGER,
-#             average_dollar_signs INTEGER,
-#             daily_bookings
-#         )"""
-#     )
-
-
-
-
-#     conn.commit() 
-#     conn.close() 
-
-
-# #
+from OpentableBS import get_daily_bookings
+from GoogleMapsAPI import read_dict_from_file, get_ann_arbor_locations, get_googlemap_data, get_street_dict, create_street_id_table, create_google_maps_table, insert_into_street_id_table, insert_into_google_maps_table
+from YelpAPI import create_yelp_db, gather_yelp_data
 import requests
 import sqlite3
 import pandas as pd
+import os 
 import plotly.graph_objects as go 
-from OpentableBS import create_table, insert_into_table, get_daily_bookings
-from GoogleMapsAPI import create_google_maps_table, get_ann_arbor_locations, get_googlemap_data, put_restaurant_dict_into_table
-# from YelpAPI import create_yelp_db, gather_yelp_data
 
 def create_db():
     conn = sqlite3.connect("BaoBuddies.db")
     cursor = conn.cursor()
 
     #put GoogleMaps data in database
-    create_google_maps_table("SI206finalproject/BaoBuddies.db")
-    locations = get_ann_arbor_locations()
-    data = get_googlemap_data(locations)
-    put_restaurant_dict_into_table(data, "SI206finalproject/BaoBuddies.db")
+    if os.path.exists("googlemaps_api_data.txt"):
+        data = read_dict_from_file("googlemaps_api_data.txt")
+    else:
+        locations = get_ann_arbor_locations()
+        data = get_googlemap_data(locations)
+
+    street_data = get_street_dict(data)
+    create_street_id_table("BaoBuddies.db")
+    create_google_maps_table("BaoBuddies.db")
+    insert_into_street_id_table(street_data, "BaoBuddies.db")
+    insert_into_google_maps_table(data, "BaoBuddies.db")
 
     #put Opentable data in database
-    get_daily_bookings("SI206finalproject/BaoBuddies.db")
+    get_daily_bookings("BaoBuddies.db")
 
     #put Yelp data in database
-    #create_yelp_db("SI206finalproject/BaoBuddies.db")
-    #gather_yelp_data('restaurants')
-
-
+    create_yelp_db("BaoBuddies.db")
+    gather_yelp_data('restaurants', conn, cursor, "BaoBuddies.db")
     
-
-
-    # create Yelp Address ID table
+    
+def visualization_googlemaps_vs_streetid(cur, conn):
+    #put GoogleMaps and StreetID in table
     cursor.execute( 
         """
-        CREATE TABLE IF NOT EXISTS Yelp Address ID (
-            address_id INTEGER PRIMARY KEY,
-            street_name TEXT, 
+        CREATE TABLE IF NOT EXISTS GoogleMapsData_VS_StreetID (
+            street TEXT PRIMARY KEY,
+            number_of_restaurants INT
         )"""
     )
-
-    # create Yelp vs. Google Maps table
     cursor.execute( 
         """
-        CREATE TABLE IF NOT EXISTS Yelp vs. Google Maps (
-            full_address TEXT PRIMARY KEY,
-            total_ratings FLOAT, 
-            average_rating FLOAT,
-            total_dollar_signs INTEGER,
-            average_dollar_signs FLOAT,
-            daily_bookings INTEGER
-        )"""
-    )      """"
-    )
-
-    # create Yelp vs. Google Maps vs. Opentable table
-    cursor.execute( 
+        SELECT name, street FROM GoogleMapsData JOIN StreetID
+        ON GoogleMapsData.street_id = StreetID.id
         """
-        CREATE TABLE IF NOT EXISTS Yelp vs. Google Maps vs. Opentable (
-            full_address TEXT PRIMARY KEY,
-            total_ratings FLOAT, 
-            average_rating FLOAT,
-            total_dollar_signs INTEGER,
-            average_dollar_signs FLOAT,
-            daily_bookings INTEGER
-        )"""
     )
-
+    street_count_dict = {}
+    for row in cursor:
+        if row[1] not in street_count_dict:
+            street_count_dict[row[1]] = 1
+        else:
+            street_count_dict[row[1]] += 1
+    for street in street_count_dict:
+        cursor.execute( 
+            """
+            INSERT OR IGNORE INTO GoogleMapsData_VS_StreetID (street, number_of_restaurants)
+            VALUES (?, ?)
+            """,
+            (street, street_count_dict[street])
+        )
     conn.commit()
-    conn.close()
+    
+    try:
+        cur.execute(
+            """
+            SELECT street, number_of_restaurants
+            FROM GoogleMapsData_VS_StreetID 
+            ORDER BY number_of_restaurants 
+            """
+        )
+        result = cur.fetchall()
+        if not result:
+            print("No data found.")
+            return
+        
+        labels_list = []
+        values_list = []
 
+        for i in range(6):
+            labels_list.append(result[i][0])
+            values_list.append(result[i][0])
+
+        fig = go.Figure(data=[go.Pie(labels=labels_list, values=values_list, color_discrete_sequence=["red", "orange", "yellow", "green", "blue", "purple"])])
+
+        title_str = "Streets with the Most Restaurants"
+        fig.update_layout(title=title_str)
+
+        fig.show()
+
+        # Save the figure
+        fig.write_html("streets_with_the_most_restaurants.html")  # Save as interactive HTML
+        fig.write_image("streets_with_the_most_restaurants.png")  # Save as static image (PNG)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.commit() 
+
+def create_ratings_and_num_bookings_table(cur, conn): 
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS RatingNumBookings (
+                phone_number TEXT PRIMARY KEY, 
+                yelp_name TEXT, 
+                yelp_rating FLOAT, 
+                opentable_bookings INTEGER
+            )
+        """) 
+
+        cur.execute(
+            """
+            INSERT INTO RatingNumBookings 
+                (phone_number, yelp_name, yelp_rating, opentable_bookings) 
+            SELECT 
+                COALESCE(YelpData.number, OpenTable.phone_number) AS phone_number, 
+                YelpData.name AS yelp_name, 
+                AVG(YelpData.rating) AS yelp_rating, 
+                SUM(OpenTable.number_of_bookings) AS opentable_num_bookings 
+            FROM YelpData 
+            LEFT JOIN OpenTable ON YelpData.number = OpenTable.phone_number 
+            GROUP BY YelpData.number
+            HAVING AVG(YelpData.rating) IS NOT NULL AND 
+                   SUM(OpenTable.number_of_bookings) IS NOT NULL
+            """
+        )
+
+        conn.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.commit() 
+
+
+def visualization_yelp_ratings_vs_num_bookings(cur, conn): 
+    try:
+        cur.execute(
+            """
+            SELECT yelp_rating, opentable_bookings
+            FROM RatingNumBookings 
+            """
+        )
+        res = cur.fetchall()
+        if not res:
+            print("No data found.")
+            return
+
+        yelp_rating, opentable_bookings = zip(*res) 
+
+        fig = go.Figure() 
+
+        fig.add_trace(go.Scatter(x=yelp_rating, y=opentable_bookings, mode='markers', name='Yelp Ratings', marker=dict(size = 12)))
+
+        title_str = "Yelp Ratings vs Number of Bookings"
+        fig.update_layout(title=title_str, xaxis_title="Yelp Rating", yaxis_title="Number of Bookings")
+
+        fig.show()
+
+        # Save the figure
+        fig.write_html("yelp_ratings_vs_num_bookings.html")  # Save as interactive HTML
+        fig.write_image("yelp_ratings_vs_num_bookings.png")  # Save as static image (PNG)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.commit() 
+
+# create Yelp vs. Google Maps table
+# cursor.execute( 
+#     """
+#     CREATE TABLE IF NOT EXISTS YelpVSGoogleMaps (
+#         phone_num TEXT PRIMARY KEY,
+#         total_ratings FLOAT, 
+#         average_rating FLOAT,
+#         total_dollar_signs INTEGER,
+#         average_dollar_signs FLOAT
+#     )"""
+# )    
+# cursor.execute(
+#     '''SELECT name, rating, price_range FROM YelpData JOIN GoogleMapsData
+#     ON YelpData.number = GoogleMapsData.phone_num
+#     '''
+# )
+# for row in cursor:
+#     print(row)
+
+#     # create Yelp vs. Google Maps vs. Opentable table
+#     cursor.execute( 
+#         """
+#         CREATE TABLE IF NOT EXISTS YelpVSGoogleMapsVSOpentable (
+#             full_address TEXT PRIMARY KEY,
+#             total_ratings FLOAT, 
+#             average_rating FLOAT,
+#             total_dollar_signs INTEGER,
+#             average_dollar_signs FLOAT,
+#             daily_bookings INTEGER
+#         )"""
+#     )
+
+#     conn.commit()
+#     conn.close() 
+
+def calculate_rating_frequencies(cur, table_name, rating_column):
+    rating_ranges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)]
+    frequencies = []
+
+    for lower, upper in rating_ranges:
+        query = f"""
+            SELECT COUNT(*)
+            FROM {table_name}
+            WHERE {rating_column} >= ? AND {rating_column} < ?
+        """
+        cur.execute(query, (lower, upper))
+        count = cur.fetchone()[0]
+        frequencies.append(count)
+
+    return frequencies
+
+def visualization_rating_frequencies(cur, conn):
+    yelp_freq = calculate_rating_frequencies(cur, "YelpData", "rating")
+    google_maps_freq = calculate_rating_frequencies(cur, "GoogleMapsData", "rating")
+
+    rating_labels = ["0-1", "1-2", "2-3", "3-4", "4-5"]
+
+    fig = go.Figure(data=[
+        go.Bar(name='Yelp', x=rating_labels, y=yelp_freq),
+        go.Bar(name='Google Maps', x=rating_labels, y=google_maps_freq)
+    ])
+
+    # Change the bar mode
+    fig.update_layout(barmode='group', title="Rating Frequencies in Yelp and Google Maps",
+                      xaxis_title="Rating Range", yaxis_title="Frequency")
+
+    fig.show()
+
+    # Optionally save the figure
+    fig.write_html("rating_frequencies.html")
+    fig.write_image("rating_frequencies.png")
+
+
+
+def visualization_yelp_ratings_vs_word_count(cur, conn):
+    try:
+        cur.execute(
+            """
+            SELECT rating, word_count 
+            FROM YelpData 
+            WHERE word_count IS NOT NULL 
+            """
+        )
+        res = cur.fetchall()
+        if not res:
+            print("No data found.")
+            return
+
+        ratings, word_counts = zip(*res)
+
+        fig = go.Figure(data=[go.Scatter(name="Yelp Ratings vs. Word Count", x=ratings, y=word_counts, mode='markers', marker_color='rgb(55,83,109)')])
+
+        title_str = "Yelp Ratings vs. Word Count"
+        fig.update_layout(title=title_str, xaxis_title="Yelp Ratings", yaxis_title="Word Count")
+
+        fig.show()
+
+        # Save the figure
+        fig.write_html("yelp_ratings_vs_word_count.html")  # Save as interactive HTML
+        fig.write_image("yelp_ratings_vs_word_count.png")  # Save as static image (PNG)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.commit() 
+
+conn = sqlite3.connect("BaoBuddies.db")
+cursor = conn.cursor()
 create_db()
+#visualization_yelp_ratings_vs_word_count(cursor, conn)
+#visualization_googlemaps_vs_streetid(cursor, conn) 
+# visualization_average_ratings_vs_num_bookings(cursor, conn) 
+# create_ratings_and_num_bookings_table(cursor, conn) 
+# visualization_yelp_ratings_vs_num_bookings(cursor, conn)
+visualization_rating_frequencies(cursor, conn)
+conn.close()
