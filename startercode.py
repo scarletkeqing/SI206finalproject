@@ -1,9 +1,9 @@
 # Names: Tiffany Tam, Kim Nguyen, Ke Qing Wong
 # Uniqnames: itsteep@umich.edu, hkimngu@umich.edu, qscarlet@umich.edu
 
-from OpentableBS import get_daily_bookings, insert_into_table
-from GoogleMapsAPI import read_dict_from_file, get_ann_arbor_locations, get_googlemap_data, get_street_dict, create_street_id_table, create_google_maps_table, insert_into_street_id_table, insert_into_google_maps_table
-from YelpAPI import create_yelp_db, gather_yelp_data
+from OpentableBS import*
+from GoogleMapsAPI import*
+from YelpAPI import*
 import requests
 import sqlite3
 import pandas as pd
@@ -28,8 +28,10 @@ def create_db():
     insert_into_google_maps_table(data, "BaoBuddies.db")
 
     #put Opentable data in database
-    get_daily_bookings("BaoBuddies.db")
-    insert_into_table(cursor, conn, get_daily_bookings("BaoBuddies.db"))
+    processed_files = get_processed_files()
+    opentable_data, processed_files = get_daily_bookings("BaoBuddies.db", processed_files)
+    save_processed_files(processed_files)
+    insert_into_table(cursor, conn, opentable_data, "BaoBuddies.db")
     
     #put Yelp data in database
     create_yelp_db("BaoBuddies.db")
