@@ -12,7 +12,7 @@ yelp_reviews = 'https://api.yelp.com/v3/businesses/{id}/reviews'
 
 # yelp_api = 'olWZg2mrP64E83paLsch77dR1jZLQ4jrMq271D_Kqt-gqf2qw1xlukFYMqVtK6s5TzKNqY-6lH7S1RWFeSjWt0cLdYSxkdK4UNCtK1lcEbOrO8rqDzO3oCBNv7RqZXYx' 
 
-yelp_api = 'nHn_p-LmYCONwOJaIlX6Ifi0sSl8i3OiH0gu0L95TEBwCa-4CwBgPN_4avbwgDwEFq82yNCT1jhMJFvcrFy0M3IFdqkVR__yu3Y7ShRSY-DZin0dbnMleSL0QK5yZXYx' 
+# yelp_api = 'nHn_p-LmYCONwOJaIlX6Ifi0sSl8i3OiH0gu0L95TEBwCa-4CwBgPN_4avbwgDwEFq82yNCT1jhMJFvcrFy0M3IFdqkVR__yu3Y7ShRSY-DZin0dbnMleSL0QK5yZXYx' 
 
 # yelp_api = 'VBFj65-f5ZWK1StnqUsw0Rm0l71hXlPvWNAk-m8NnFpBCoCJOHlmgLqgsv9-yUj6iNmnTz1xEgE1ohT91t8vrltYiW_BOGaux_2sxrOK1iYcuDgEEkqbc6kZZUdzZXYx' 
 
@@ -25,7 +25,7 @@ yelp_api = 'nHn_p-LmYCONwOJaIlX6Ifi0sSl8i3OiH0gu0L95TEBwCa-4CwBgPN_4avbwgDwEFq82
 # yelp_api = 'Si8jAzR_Sf0XScGPD4LNxryrSm3na3exz_TQ-fTSYa9S0DxyVeG86hs9TWe5EMvraT6s32VWN6dGgHFelvscZW-1i7IB6ihsD8-2_kNCmjit28BC8_FfyIDRIYN3ZXYx'
 
 # scarlet # 1 
-# yelp_api = 'Twi7MjnUNzHCdbpUkUdRoQ0_rY3ZAbogSM0pU9099DGFyWJyDu1APWpNELU3-aoTt6wtNXQUUoFCf4Fo4kywrgZDh8HetB_hWhLbzL4EF8UKixhX0sGikIR7_oJ3ZXYx'
+yelp_api = 'Twi7MjnUNzHCdbpUkUdRoQ0_rY3ZAbogSM0pU9099DGFyWJyDu1APWpNELU3-aoTt6wtNXQUUoFCf4Fo4kywrgZDh8HetB_hWhLbzL4EF8UKixhX0sGikIR7_oJ3ZXYx'
 
 YELP_DB = "Yelp.db"
 
@@ -129,13 +129,13 @@ def save_data_to_db(db_name, source, restaurant_data):
     conn.commit()
     conn.close()
 
-def main(): 
-    conn = sqlite3.connect(YELP_DB) 
-    cur = conn.cursor()
-    create_yelp_db(YELP_DB)
-    gather_yelp_data('restaurants', conn, cur, YELP_DB)
-    cur.close() 
-    conn.close()
+# def main(): 
+#     conn = sqlite3.connect(YELP_DB) 
+#     cur = conn.cursor()
+#     create_yelp_db(YELP_DB)
+#     gather_yelp_data('restaurants', conn, cur, YELP_DB)
+#     cur.close() 
+#     conn.close()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
